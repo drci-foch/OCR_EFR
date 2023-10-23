@@ -6,8 +6,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 def extract_text_from_image(image_path):
     image = cv2.imread(image_path)
-    config = ''  # Utilisez le mode LSTM de Tesseract
-    return pytesseract.image_to_string(image, config=config)
+    return pytesseract.image_to_string(image)
 
 def combine_occurrences(sections):
     i = 0
