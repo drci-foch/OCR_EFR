@@ -91,7 +91,6 @@ def process_texts_in_folder(folder_path):
         text = extract_text_from_image(image_path)
 
         sections = text.split()  # You may need to adjust the split method if sections are separated differently.
-        print(sections)
         end_keyword = ['VIMS'] if 'VIMS' in sections else ['DEM25']
         parameters_section = extract_section(sections, None, end_keyword, 1)        
         theo_values = extract_section(sections, ['Théo', 'Theo', ' Théo', ' Theo', 'Théo ', 'Theo '], ['Pre', 'Pré', 'Pre ', 'Pré ', ' Pré', ' Pre'])
@@ -101,7 +100,7 @@ def process_texts_in_folder(folder_path):
         theo_values = adjust_list_length(theo_values, parameters_section)
         perc_theo_values = adjust_list_length(perc_theo_values, parameters_section)
         
-        print(perc_theo_values)
+        #print(perc_theo_values)
         
         df_data = {
             'Paramètres': parameters_section,
