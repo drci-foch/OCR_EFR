@@ -1,28 +1,38 @@
-# QuickScanEFR : OCR for Pulmonary Function Testing
+# QuickScanEFR: OCR for Pulmonary Function Testing
 
-This project offers an end-to-end pipeline for extracting textual content from PTF (Pulmonary Function Testing) scan reports, saved in PDF format, and then saving this extracted data as structured content. The pipeline is specifically optimized for PTF reports and ensures accuracy in data extraction.
+QuickScanEFR provides a dedicated pipeline for extracting textual content from PFT (Pulmonary Function Testing) scan reports saved in PDF format. Optimized specifically for PFT reports, it ensures precision in data extraction.
 
-## Features
+## 🚀 Features
 
--PDF to Image Conversion: Converts EFR PDF reports, especially those with embedded images or complex layouts, into high-resolution PNG images.
--Image Preprocessing: Enhances the quality of images from EFR reports to make them suitable for OCR. This includes resizing, thresholding, erosion, and cropping to focus on regions of interest.
--OCR Processing using Tesseract and Camelot Plubmer: Extracts text from preprocessed EFR images using Tesseract andthe Camelot library, which is integrated into the pipeline via a plumber. The extracted data is then structured for saving in Excel format.
+- **PDF to Image Conversion**: 
+  - Transform EFR PDF reports with embedded images or complex layouts into high-resolution PNG images.
+  
+- **Image Preprocessing**: 
+  - Improve image quality from EFR reports for better OCR results.
+    
+- **OCR Processing**: 
+  - Utilize Tesseract and Camelot integrated through a plumber.
+  - Extract and structure the data.
 
-## Optimization
 
-The pipeline is optimized for performance using parallel processing wherever possible. This ensures faster processing of multiple EFR reports, especially on multi-core systems.
+## ⚙️ Optimization
 
-## Future Enhancements
+- Employs parallel processing for enhanced performance.
+- Swift processing of multiple EFR reports, especially beneficial for multi-core systems.
 
--Adding support for multi-page EFR PDF reports.
--Enhancing OCR accuracy with fine-tuning
--GUI for easier user interaction with the pipeline.
 
-## Contributing
+## 🔮 Future Enhancements
 
-If you'd like to contribute to this project, please fork the repository and submit a pull request.
+- Support for multi-page EFR PDF reports.
+- Boost OCR accuracy with further fine-tuning.
+- Intuitive GUI for a user-friendly experience.
 
-## License
 
-This project is licensed under the MIT License.
+## 🤝 Contributing
 
+- Interested in making a difference? Fork the repository and submit a pull request!
+
+
+## 📜 License
+
+- QuickScanEFR is proudly licensed under the MIT License.
