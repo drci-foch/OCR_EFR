@@ -11,8 +11,7 @@ QuickScanEFR provides a dedicated pipeline for extracting textual content from P
   
 - **Image Preprocessing**: 
   - Improve image quality from EFR reports for better OCR results.
-  - Techniques include resizing, thresholding, erosion, and cropping to focus on regions of interest.
-  
+    
 - **OCR Processing**: 
   - Utilize Tesseract and Camelot integrated through a plumber.
   - Extract and structure the data for saving in Excel format.
