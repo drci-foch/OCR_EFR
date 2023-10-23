@@ -5,24 +5,19 @@ from OCRProcessor_optimized import process_texts_in_folder as ocr_process
 import time
 
 def delete_intermediate_files(folder_path):
-    # Define the path for the converted images folder
     converted_images_folder = os.path.join(folder_path, "converted_images")
     
-    # Traverse directory tree using os.walk()
     for dirpath, dirnames, filenames in os.walk(converted_images_folder, topdown=False):
-        # Delete files which are not .xlsx
         for filename in filenames:
             if not filename.endswith('.xlsx'):
                 os.remove(os.path.join(dirpath, filename))
         
-        # Try to remove the directories if they are empty
         for dirname in dirnames:
             try:
                 os.rmdir(os.path.join(dirpath, dirname))
             except:
                 print(f"Le dossier {os.path.join(dirpath, dirname)} n'est pas vide, certains fichiers n'ont pas été supprimés.")
     
-    # Try to remove the main converted_images folder if it's empty
     try:
         os.rmdir(converted_images_folder)
     except:

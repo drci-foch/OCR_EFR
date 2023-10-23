@@ -4,19 +4,17 @@ import numpy as np
 from concurrent.futures import ProcessPoolExecutor
 
 def preprocess_image(image_path, output_folder):
-    # Lire l'image en niveau de gris
+    # niveau de gris
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
-    # Redimensionner l'image
+    # redimension de l'image
     image = cv2.resize(image, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
 
-    # Binarisation avec un seuil fixe
+    # Binarisation avec un seuil fixe (seuil adaptatif ne marche pas)
     _, image = cv2.threshold(image, 100, 400, cv2.THRESH_BINARY)
 
-    # Define a kernel for erosion. This can be adjusted based on your needs.
+    # erosion
     kernel = np.ones((5,5),np.uint8)  # A 5x5 kernel of ones
-
-    # Apply erosion
     image = cv2.erode(image, kernel, iterations = 1)
     
     # Crop l'image sur le tableau d'intérêt
@@ -33,7 +31,7 @@ def process_images_in_folder(folder_path):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # List and filter PNG files in the directory in one operation
+    # optimisation du code : on liste et filtre les png en une seul opération
     png_files = [file for file in os.listdir(folder_path) if file.lower().endswith('.png')]
 
     with ProcessPoolExecutor() as executor:
