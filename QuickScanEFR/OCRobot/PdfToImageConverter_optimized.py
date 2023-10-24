@@ -31,6 +31,3 @@ class PdfConverter:
             for message in results:
                 print(message)
 
-
-# Dummy run to check if the class definition is error-free
-converter = PdfConverter("sample_folder_path")
