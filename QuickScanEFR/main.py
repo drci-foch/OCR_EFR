@@ -1,3 +1,6 @@
+# Auteur : Sarra Ben Yahia
+# Point d'entrée principal de QuickScanEFR. Ce script vérifie les différents formats des fichiers PDF. Si le contenu du PDF est sélectionnable (c'est-à-dire rédigé manuellement par le médecin), alors TextMachina est exécuté. Dans le cas contraire, OCRobot est sollicité.
+
 import os
 import PyPDF2
 import subprocess
