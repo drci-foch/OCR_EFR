@@ -3,6 +3,9 @@ import pandas as pd
 import warnings 
 warnings.simplefilter(action='ignore', category=UserWarning)
 
+
+# CEUX SUPERIEUR A 100% C PAS DES POURCENTAGES 
+
 class PercentageExtractor:
 
     @staticmethod
@@ -64,12 +67,12 @@ class PercentageExtractor:
                         processed_df = cls.process_dataframe_for_percentages(df)
                         all_sheets[sheet_name] = processed_df
                         
-                output_file_path = os.path.join(directory, filename.replace("_cleaned.xlsx", "_cleaned_percent_extracted.xlsx"))
+                output_file_path = os.path.join(directory, filename.replace("_cleaned.xlsx", "_cleaned.xlsx"))
                 with pd.ExcelWriter(output_file_path) as writer:
                     for sheet_name, data in all_sheets.items():
                         data.to_excel(writer, sheet_name=sheet_name, index=False)
                 
-                print(f"Processed: {filename} -> {filename.replace('_cleaned.xlsx', '_cleaned_percent_extracted.xlsx')}")
+                print(f"Processed: {filename} -> {filename.replace('_cleaned.xlsx', '_cleaned.xlsx')}")
 
 
 

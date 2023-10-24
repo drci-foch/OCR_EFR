@@ -2,6 +2,8 @@ import os
 import pandas as pd
 import re
 
+# LA ligne "DATE" peut ne pas être une date carrément, et juste c'est écrit "6 mois plus tard...", il faudrait recalculer ?
+
 class DateFormatter:
 
     @staticmethod
