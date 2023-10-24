@@ -10,9 +10,9 @@ QuickScanEFR provides a dedicated pipeline for extracting textual content from P
 - **Image Preprocessing**: 
   - Improve image quality from EFR reports for better OCR results.
     
-- **OCR Processing**: 
-  - Utilize Tesseract and Camelot integrated through a plumber.
-  - Extract and structure the data.
+- **OCR Processing**:
+  - Utilize Tesseract (OCRobot) and Camelot (TextMachina) integrated through a plumber pipeline.
+  - Extract and structure automatically the data.
 
 
 ## ⚙️ Optimization
