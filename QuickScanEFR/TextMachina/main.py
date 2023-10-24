@@ -1,6 +1,6 @@
 from PercentageExtractor import PercentageExtractor
 from DateFromatter import DateFormatter
-from PDFPlumber import PDFProcessor  # Assuming the class is in PDFProcessor.py
+from PDFPlumber import PDFProcessor 
 
 # Initialization
 date_formatter = DateFormatter()
