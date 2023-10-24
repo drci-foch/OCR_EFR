@@ -5,13 +5,14 @@ from PDFPlumber import PDFProcessor  # Assuming the class is in PDFProcessor.py
 # Initialization
 date_formatter = DateFormatter()
 percent_extractor = PercentageExtractor()
-pdf_processor = PDFProcessor(directory_path='./pdf')
+pdf_processor = PDFProcessor(directory_path='../QuickScanEFR/pdf_TextMachina')
 
 # First, process the PDFs to extract tables and save them in Excel format
 pdf_processor.process_directory()
 
 # Then, format the dates
-date_formatter.format_dates_in_excel("./pdf/")
+date_formatter.format_dates_in_excel("../QuickScanEFR/pdf_TextMachina")
 
 # Finally, extract the percentages
-percent_extractor.extract_percentages_from_excel("./pdf/")
+percent_extractor.extract_percentages_from_excel("../QuickScanEFR/pdf_TextMachina")
+

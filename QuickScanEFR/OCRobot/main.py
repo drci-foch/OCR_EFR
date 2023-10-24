@@ -63,6 +63,6 @@ class MainPipeline:
 # Test
 if __name__ == "__main__":
     # Replace with your actual path
-    folder_path = "/Users/sarrabenyahia/Documents/GitHub/OCR_EFR/test_OCRobot"
+    folder_path = "../QuickScanEFR/pdf_OCRobot"
     pipeline = MainPipeline(folder_path)
     pipeline.run()
