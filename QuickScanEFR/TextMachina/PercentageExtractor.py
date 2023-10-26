@@ -3,13 +3,21 @@ import pandas as pd
 import warnings 
 warnings.simplefilter(action='ignore', category=UserWarning)
 
-
-# CEUX SUPERIEUR A 100% C PAS DES POURCENTAGES 
-
 class PercentageExtractor:
-
+    """
+    A class responsible for extracting percentage values from Excel rows and processing dataframes for percentages.
+    """
     @staticmethod
     def extract_percentages_from_row(row):
+        """
+        Extracts percentage values from a row of data.
+
+        Parameters:
+        - row (Series): A row of data containing values that might be in the format "value percentage".
+
+        Returns:
+        - tuple: Two lists, one with cleaned values and another with extracted percentages.
+        """
         cleaned_values = []
         percentage_values = []
 
@@ -33,6 +41,15 @@ class PercentageExtractor:
 
     @staticmethod
     def process_dataframe_for_percentages(df):
+        """
+        Processes a dataframe and extracts percentage rows from it.
+
+        Parameters:
+        - df (DataFrame): The input dataframe to process.
+
+        Returns:
+        - DataFrame: A dataframe with original and extracted percentage rows.
+        """
         result_data = []
 
         for _, row in df.iterrows():
@@ -54,6 +71,12 @@ class PercentageExtractor:
 
     @classmethod
     def extract_percentages_from_excel(cls, directory):
+        """
+        Extracts percentage values from all Excel files in a specified directory that have been processed by DateFormatter.
+
+        Parameters:
+        - directory (str): Path to the directory containing the Excel files.
+        """
         for filename in os.listdir(directory):
             # Look for files that have been processed by DateFormatter
             if filename.endswith("_cleaned.xlsx"):

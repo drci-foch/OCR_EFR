@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import re
 
+
 class DateFormatter:
 
     @staticmethod
@@ -14,7 +15,7 @@ class DateFormatter:
         date_pattern = re.compile(r'(\d{1,2}[./]\d{1,2}[./]\d{2})')
         match = date_pattern.search(s)
         return match.group(1) if match else s
-    
+
     @staticmethod
     def extract_relative_date(reference_date, s):
         """
@@ -22,7 +23,7 @@ class DateFormatter:
         Handles variations like "1 an plus tard", "6 mois", "2 ans", "4 jours après", etc.
         """
         num = int(re.search(r'(\d+)', s).group(1))
-        if "jour" in s:
+        if "jour" in s or "jours" in s:
             new_date = reference_date + pd.DateOffset(days=num)
         elif "mois" in s:
             new_date = reference_date + pd.DateOffset(months=num)
@@ -41,8 +42,9 @@ class DateFormatter:
         cleaned_dates = []
         for idx, date_str in enumerate(date_series):
             date_str = str(date_str)
-            if any(term in date_str for term in ["plus tard", "après", "mois", "an", "ans", "jour"]):
-                new_date = DateFormatter.extract_relative_date(cleaned_dates[-1], date_str)
+            if any(term in date_str for term in ["plus tard", "après", "mois", "an", "ans", "jour", "jours"]):
+                new_date = DateFormatter.extract_relative_date(
+                    cleaned_dates[-1], date_str)
                 cleaned_dates.append(new_date)
             else:
                 date = DateFormatter.extract_date_from_string(date_str)
@@ -55,7 +57,8 @@ class DateFormatter:
     @staticmethod
     def format_dates_in_worksheet(df):
         """Formats the dates in the first row of a DataFrame using a simplified approach."""
-        formatted_dates = DateFormatter.flexible_date_formatting(df.iloc[0, 1:])
+        formatted_dates = DateFormatter.flexible_date_formatting(
+            df.iloc[0, 1:])
         df.iloc[0, 1:len(formatted_dates)+1] = formatted_dates
         return df
 
@@ -73,11 +76,15 @@ class DateFormatter:
                         df = pd.read_excel(xls, sheet_name)
                         cleaned_df = cls.format_dates_in_worksheet(df)
                         all_sheets[sheet_name] = cleaned_df
-                output_file_path = os.path.join(directory, filename.replace(".xlsx", "_cleaned.xlsx"))
+                output_file_path = os.path.join(
+                    directory, filename.replace(".xlsx", "_cleaned.xlsx"))
                 with pd.ExcelWriter(output_file_path) as writer:
                     for sheet_name, data in all_sheets.items():
-                        data.to_excel(writer, sheet_name=sheet_name, index=False)
-                print(f"Processed: {filename} -> {filename.replace('.xlsx', '_cleaned.xlsx')}")
+                        data.to_excel(
+                            writer, sheet_name=sheet_name, index=False)
+                print(
+                    f"Processed: {filename} -> {filename.replace('.xlsx', '_cleaned.xlsx')}")
+
     @staticmethod
     def extract_relative_date(reference_date, s):
         """
@@ -100,4 +107,3 @@ class DateFormatter:
         else:
             new_date = reference_date
         return new_date
-

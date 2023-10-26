@@ -6,6 +6,13 @@ from openpyxl.styles import PatternFill
 
 class OutlierDetector:
     def __init__(self, excel_file_path=None, relative_size_threshold=5):
+        """
+        Initialize the OutlierDetector.
+
+        Parameters:
+        - excel_file_path (str, optional): Path to the input Excel file.
+        - relative_size_threshold (float, optional): Threshold for determining relative size anomalies.
+        """
         self.excel_file_path = excel_file_path
         self.relative_size_threshold = relative_size_threshold
         self.anomalies_dict = {}
@@ -15,6 +22,12 @@ class OutlierDetector:
             self.combined_data = self._combine_data_horizontally()
     
     def _combine_data_horizontally(self):
+        """
+        Combine data from all sheets in the workbook horizontally.
+
+        Returns:
+        - DataFrame: Combined data from all sheets.
+        """
         combined_data = pd.DataFrame([cell for cell in col] for col in self.workbook[self.sheet_names[0]].iter_cols(values_only=True)).T
         for sheet in self.sheet_names[1:]:
             temp_df = pd.DataFrame([cell for cell in col] for col in self.workbook[sheet].iter_cols(values_only=True)).T
@@ -24,6 +37,16 @@ class OutlierDetector:
 
     @staticmethod
     def convert_to_float(val):
+        """
+        Convert a value to float. If the value is a percentage (contains '%'), 
+        it's converted to its decimal representation.
+
+        Parameters:
+        - val (str/int/float): Value to be converted.
+
+        Returns:
+        - float: Converted value or NaN if conversion is not possible.
+        """
         try:
             if "%" in str(val):
                 return float(val.rstrip('%')) / 100.0
@@ -33,6 +56,10 @@ class OutlierDetector:
             return np.nan
     
     def detect_relative_median_anomalies(self):
+        """
+        Detect anomalies based on relative median for combined data.
+        Anomalies are saved in the 'anomalies_dict' attribute.
+        """
         for index, row in self.combined_data.iterrows():
             metric_name = row[0]
             if index == 0 or pd.isnull(metric_name):
@@ -46,6 +73,12 @@ class OutlierDetector:
                 self.anomalies_dict[metric_name] = anomalies
                 
     def highlight_anomalies_in_excel(self, output_file_path=None):
+        """
+        Highlight detected anomalies in the Excel file with a red fill.
+
+        Parameters:
+        - output_file_path (str, optional): Path for saving the modified Excel file.
+        """
         red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
         
         for sheet_name in self.sheet_names:
@@ -62,6 +95,12 @@ class OutlierDetector:
         self.workbook.save(output_file_path)
 
     def detect_anomalies_for_multiple_docs(self, directory_path):
+        """
+        Detect and highlight anomalies for multiple Excel documents in a specified directory.
+
+        Parameters:
+        - directory_path (str): Path to the directory containing the Excel files.
+        """
         excel_files = [f for f in os.listdir(directory_path) if f.endswith('_cleaned.xlsx')]
         
         for excel_file in excel_files:
