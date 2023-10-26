@@ -1,6 +1,6 @@
 # QuickScanEFR: OCR for Pulmonary Function Testing
 
-QuickScanEFR provides a dedicated pipeline for extracting textual content from PFT (Pulmonary Function Testing) scan reports saved in PDF format. Optimized specifically for PFT reports, it ensures precision in data extraction.
+QuickScanEFR provides a dedicated pipeline for extracting textual content from PFT (Pulmonary Function Testing) scan reports saved in PDF format in Foch Hospital database. Optimized specifically for PFT reports, it ensures precision in data extraction.
 
 ## 🚀 Features
 
