@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import re
 
+
 class DateFormatter:
 
     @staticmethod
@@ -70,7 +71,8 @@ class DateFormatter:
         for idx, date_str in enumerate(date_series):
             date_str = str(date_str)
             if any(term in date_str for term in ["plus tard", "après", "mois", "an", "ans", "jour", "jours"]):
-                new_date = DateFormatter.extract_relative_date(cleaned_dates[-1], date_str)
+                new_date = DateFormatter.extract_relative_date(
+                    cleaned_dates[-1], date_str)
                 cleaned_dates.append(new_date)
             else:
                 date = DateFormatter.extract_date_from_string(date_str)
@@ -89,18 +91,16 @@ class DateFormatter:
 
         # Find the columns where the first row is not NaN
         non_empty_columns = df.columns[~is_empty_column]
-        print(df[non_empty_columns])
         return df[non_empty_columns]
 
     @staticmethod
     def format_dates_in_worksheet(df):
         """Formats the dates in the first row of a DataFrame using a simplified approach."""
-        formatted_dates = DateFormatter.flexible_date_formatting(df.iloc[0, 1:])
+        formatted_dates = DateFormatter.flexible_date_formatting(
+            df.iloc[0, 1:])
         df.iloc[0, 1:len(formatted_dates)+1] = formatted_dates
         df = DateFormatter.delete_empty_date_columns(df)
         return df
-    
-
 
     @classmethod
     def format_dates_in_excel(cls, directory):
@@ -114,8 +114,11 @@ class DateFormatter:
                         df = pd.read_excel(xls, sheet_name)
                         cleaned_df = cls.format_dates_in_worksheet(df)
                         all_sheets[sheet_name] = cleaned_df
-                output_file_path = os.path.join(directory, filename.replace(".xlsx", "_cleaned.xlsx"))
+                output_file_path = os.path.join(
+                    directory, filename.replace(".xlsx", "_cleaned.xlsx"))
                 with pd.ExcelWriter(output_file_path) as writer:
                     for sheet_name, data in all_sheets.items():
-                        data.to_excel(writer, sheet_name=sheet_name, index=False)
-                print(f"Processed: {filename} -> {filename.replace('.xlsx', '_cleaned.xlsx')}")
+                        data.to_excel(
+                            writer, sheet_name=sheet_name, index=False)
+                print(
+                    f"Processed: {filename} -> {filename.replace('.xlsx', '_cleaned.xlsx')}")
