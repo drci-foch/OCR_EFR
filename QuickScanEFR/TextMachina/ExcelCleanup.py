@@ -1,6 +1,6 @@
 import os
+import re
 import pandas as pd
-
 
 class ExcelCleanup:
     def __init__(self, file_path=None):
@@ -11,51 +11,36 @@ class ExcelCleanup:
         """Load the Excel workbook."""
         self.combined_data = pd.read_excel(self.file_path)
 
+    @staticmethod
+    def format_percentage(value, is_first_column=False):
+        """Format the value to the desired percentage format."""
+        # If it's the first column, retain the '%' symbol
+        if is_first_column:
+            return value
+        
+        # Convert string percentages like "90%" to 90 only if they strictly match the "X%" format
+        if isinstance(value, str) and re.match(r"^\d+(\.)?%$", value):  # This regex also allows for decimals like "64.56%"
+            return float(value.replace('%', ''))
+        
+        # Convert float percentages like 0.9 to 90
+        elif isinstance(value, (float, int)) and 0 < value <= 1:
+            return value * 100
+        
+        else: 
+            return value
+        
+        
+
     def clean_percentage_values(self):
         """Clean percentage values for rows with first column ending in '%'."""
-        def format_percentage(value, is_first_column=False):
-            """Format the value to the desired percentage format."""
-            # If it's the first column, retain the '%' symbol
-            if is_first_column:
-                return value
-            
-            # Convert string percentages like "90%" to 90
-            if isinstance(value, str) and value.endswith('%'):
-                return float(value.replace('%', ''))
-            
-            # Convert float percentages like 0.9 to 90
-            elif isinstance(value, (float, int)) and 0 < value <= 1:
-                return value * 100
-            
-            return value
-
+    
         # Filter rows where the first column value ends with '%'
         rows_to_process = self.combined_data[self.combined_data.iloc[:, 0].str.endswith('%', na=False)]
         
         # Process every column for the filtered rows
         for _, row in rows_to_process.iterrows():
             for idx, col in enumerate(self.combined_data.columns):
-                self.combined_data.at[row.name, col] = format_percentage(self.combined_data.at[row.name, col], is_first_column=(idx == 0))
-
-
-    def format_percentage(self, value):
-        """Format value to the desired percentage format."""
-        if pd.notnull(value) and isinstance(value, (str, int, float)):
-            str_value = str(value).replace('%', '')
-
-            # If the value ends with '%'
-            if str_value.endswith('%') and self.is_convertible_to_float(str_value):
-                return float(str_value.replace('%', ''))
-
-            # If the value is in the range (0, 1], like 0.9 for 90%
-            elif self.is_convertible_to_float(value) and 0 < float(value) <= 1:
-                return float(value) * 100
-
-            # If the value is already in the format like 90 for 90%
-            elif self.is_convertible_to_float(value):
-                return float(value)
-
-        return value
+                self.combined_data.at[row.name, col] = ExcelCleanup.format_percentage(self.combined_data.at[row.name, col], is_first_column=(idx == 0))
 
     @staticmethod
     def is_convertible_to_float(value):

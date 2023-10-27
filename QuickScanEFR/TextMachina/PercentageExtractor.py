@@ -1,6 +1,6 @@
 import os
-import pandas as pd
 import warnings 
+import pandas as pd
 warnings.simplefilter(action='ignore', category=UserWarning)
 
 class PercentageExtractor:
@@ -23,21 +23,27 @@ class PercentageExtractor:
 
         for value in row:
             if isinstance(value, str) and "%" in value:
-                parts = value.split()
+                # Find the position of the first percentage sign
+                percent_index = value.index('%')
                 
-                # If the value is split into exactly two parts
-                if len(parts) == 2:
-                    absolute, percent = parts
-                    cleaned_values.append(absolute)
-                    percentage_values.append(percent)
-                else:
-                    cleaned_values.append(value)
-                    percentage_values.append(None)
+                # Work backwards to determine where the numeric percentage starts
+                start_index = percent_index
+                while start_index > 0 and not value[start_index - 1].isspace():
+                    start_index -= 1
+                
+                # Split the string based on the starting index of the numeric percentage
+                cleaned_value = value[:start_index].rstrip()  # Remove trailing spaces
+                percent_value = value[start_index:].strip()
+                
+                cleaned_values.append(cleaned_value)
+                percentage_values.append(percent_value)
             else:
                 cleaned_values.append(value)
                 percentage_values.append(None)
 
         return cleaned_values, percentage_values
+
+
 
     @staticmethod
     def process_dataframe_for_percentages(df):
@@ -90,12 +96,10 @@ class PercentageExtractor:
                         processed_df = cls.process_dataframe_for_percentages(df)
                         all_sheets[sheet_name] = processed_df
                         
-                output_file_path = os.path.join(directory, filename.replace("_cleaned.xlsx", "_cleaned.xlsx"))
+                output_file_path = os.path.join(directory, filename)
                 with pd.ExcelWriter(output_file_path) as writer:
                     for sheet_name, data in all_sheets.items():
                         data.to_excel(writer, sheet_name=sheet_name, index=False)
                 
-                print(f"Processed: {filename} -> {filename.replace('_cleaned.xlsx', '_cleaned.xlsx')}")
-
-
+                print(f"Processed: {filename}")
 

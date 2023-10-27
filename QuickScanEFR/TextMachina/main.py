@@ -4,7 +4,7 @@ from DateFormatter import DateFormatter
 from PDFPlumber import PDFProcessor
 from OutlierDetector import OutlierDetector
 from VEMSImputer import VEMSCorrector
-from CVFCorrector import CVFCorrector
+from UnitCorrector import UnitCorrector
 from ExcelCleanup import ExcelCleanup
 
 class MainPipeline:
@@ -15,7 +15,7 @@ class MainPipeline:
         self.pdf_processor = PDFProcessor(directory_path=self.directory_path)
         self.outlier_detector = OutlierDetector(None)
         self.vems_corrector = VEMSCorrector()
-        self.cvf_corrector = CVFCorrector()
+        self.unit_corrector = UnitCorrector()
         self.excel_cleanup = ExcelCleanup()
 
 
@@ -39,9 +39,9 @@ class MainPipeline:
         """Compute missing VEMS values."""
         self.vems_corrector.correct_multiple_docs(self.directory_path)
 
-    def correct_cvf(self):
+    def correct_unit(self):
         """Correct the CVF values."""
-        self.cvf_corrector.correct_multiple_docs(self.directory_path)
+        self.unit_corrector.correct_multiple_docs(self.directory_path)
         
     def clean_excel_files(self):
         self.excel_cleanup.clean_multiple_docs(self.directory_path)
@@ -62,7 +62,7 @@ class MainPipeline:
         self.extract_percentages()
         self.detect_anomalies()
         self.correct_vems()
-        self.correct_cvf()
+        self.correct_unit()
         self.clean_excel_files()
         self.cleanup()
 
