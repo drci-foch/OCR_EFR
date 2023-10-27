@@ -26,7 +26,7 @@ def main_processing_pipeline(directory_path):
     date_formatter = DateFormatterRefactored()
     date_formatter.format_dates_in_excel(directory_path)
     
-    # Step 5: VEMS Imputation (using the initial function from the user)
+    # Step 5: VEMS Imputation 
     vems_corrector = VEMSCorrectorRefactored()
     vems_corrector.correct_multiple_docs(directory_path)
     
