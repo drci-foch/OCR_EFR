@@ -39,10 +39,10 @@ class TypoCorrector:
             if filename.endswith(".xlsx"):
                 filepath = os.path.join(directory_path, filename)
                 df = pd.read_excel(filepath)
-                
+
                 # Extract unique metric names from the document
                 unique_metrics = df.iloc[:, 0].dropna().unique().tolist()
-                
+
                 # Determine the closest standardized names for each unique metric
                 relevant_metrics = [self.correct(metric, self.standardized_strings) for metric in unique_metrics]
                 
