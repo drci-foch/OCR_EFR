@@ -76,30 +76,25 @@ class PercentageExtractor:
         return result_df
 
     @classmethod
-    def extract_percentages_from_excel(cls, directory):
+    def extract_percentages_from_excel(self, directory_path):
         """
-        Extracts percentage values from all Excel files in a specified directory that have been processed by DateFormatter.
+        Extracts percentage values from all Excel files in a specified directory.
 
         Parameters:
-        - directory (str): Path to the directory containing the Excel files.
+        - directory_path (str): Path to the directory containing the Excel files.
         """
-        for filename in os.listdir(directory):
-            # Look for files that have been processed by DateFormatter
-            if filename.endswith("_cleaned.xlsx"):
-                file_path = os.path.join(directory, filename)
-                
-                with pd.ExcelFile(file_path) as xls:
-                    all_sheets = {}
-                    
-                    for sheet_name in xls.sheet_names:
-                        df = pd.read_excel(xls, sheet_name)
-                        processed_df = cls.process_dataframe_for_percentages(df)
-                        all_sheets[sheet_name] = processed_df
-                        
-                output_file_path = os.path.join(directory, filename)
-                with pd.ExcelWriter(output_file_path) as writer:
-                    for sheet_name, data in all_sheets.items():
-                        data.to_excel(writer, sheet_name=sheet_name, index=False)
-                
-                print(f"Processed: {filename}")
+        for filename in filter(lambda f: f.endswith(".xlsx"), os.listdir(directory_path)):
+            file_path = os.path.join(directory_path, filename)
+            
+            # Read the Excel file (assuming it has only one sheet)
+            df = pd.read_excel(file_path, header=None)
+            
+            # Process the dataframe
+            processed_df = self.process_dataframe_for_percentages(df)
+            
+            # Save the processed dataframe back to the Excel file
+            processed_df.to_excel(file_path, index=False, header=False)
+            
+
+
 
