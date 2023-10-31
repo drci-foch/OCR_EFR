@@ -4,7 +4,7 @@ class TypoCorrector:
         """
         Initialize the TypoCorrector with a list of standardized strings.
         
-        :param standardized_strings: List of standardized strings to be used for correction.
+        standardized_strings: List of standardized strings to be used for correction.
         """
         self.standardized_strings = standardized_strings
 
@@ -30,9 +30,9 @@ class TypoCorrector:
         """
         Correct the given string based on Levenshtein distance and a threshold.
         
-        :param string: The string to be corrected.
-        :param threshold_ratio: Threshold for correction based on the ratio of string length.
-        :return: Corrected string.
+        string: The string to be corrected.
+        threshold_ratio: Threshold for correction based on the ratio of string length.
+        return: Corrected string.
         """
         best_match = None
         best_distance = float('inf')
