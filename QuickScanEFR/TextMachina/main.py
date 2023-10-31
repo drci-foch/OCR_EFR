@@ -24,37 +24,62 @@ class MainPipeline:
         self.excel_cleaner = ExcelCleanup()
         self.pdf_processor = PDFProcessor(directory_path=input_directory)
 
+ 
     def process_pdfs(self):
+        start_time = time.time()
         self.pdf_processor.process_directory()
-        #print("process_pdfs done")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"process_pdfs took {elapsed_time:.2f} seconds")
 
     def format_dates(self):
+        start_time = time.time()
         self.date_formatter.format_dates_in_excel(directory_path=self.output_directory)
-        #print("format_dates done")
-        
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"format_dates took {elapsed_time:.2f} seconds")
+
     def extract_percentages(self):
+        start_time = time.time()
         self.percentage_extractor.extract_percentages_from_excel(directory_path=self.output_directory)
-        #print("extract_percentages done")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"extract_percentages took {elapsed_time:.2f} seconds")
 
     def detect_anomalies(self):
+        start_time = time.time()
         self.outlier_detector.detect_anomalies_for_multiple_docs(directory_path=self.output_directory)
-        #print("detect_anomalies done")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"detect_anomalies took {elapsed_time:.2f} seconds")
 
     def compute_missing_vems(self):
+        start_time = time.time()
         self.vems_imputer.correct_multiple_docs(directory_path=self.output_directory)
-        #print("compute_missing_vems done")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"compute_missing_vems took {elapsed_time:.2f} seconds")
 
     def correct_units(self):
+        start_time = time.time()
         self.unit_corrector.correct_multiple_docs(directory_path=self.output_directory)
-        #print("correct_units done")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"correct_units took {elapsed_time:.2f} seconds")
 
     def correct_metric_typos(self):
+        start_time = time.time()
         self.typo_corrector.correct_multiple_docs(directory_path=self.output_directory)
-        #print("correct_metric_typos done")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"correct_metric_typos took {elapsed_time:.2f} seconds")
 
     def clean_excel_files(self):
+        start_time = time.time()
         self.excel_cleaner.clean_multiple_docs(directory_path=self.output_directory)
-        #print("clean_excel_files done")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"clean_excel_files took {elapsed_time:.2f} seconds")
 
     def run(self):
         self.process_pdfs()

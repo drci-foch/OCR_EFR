@@ -130,18 +130,18 @@ class DateFormatter:
                 #print(f"Processing file: {file_path}")
                 df = pd.read_excel(file_path, header=None)
                 first_row = df.iloc[0]
-                print(f"Original first row:\n{first_row}")
+                #print(f"Original first row:\n{first_row}")
                 corrected_first_row = self.flexible_date_formatting(first_row)
                 #print(f"Corrected first row:\n{corrected_first_row}")
             
                 corrected_first_row = pd.to_datetime(corrected_first_row, errors='coerce')
-                print(f"Dates after pd.to_datetime:\n{corrected_first_row}")
+                #print(f"Dates after pd.to_datetime:\n{corrected_first_row}")
                 if isinstance(corrected_first_row, pd.Series):
                     corrected_first_row = corrected_first_row.dt.strftime('%d/%m/%Y')
                 elif isinstance(corrected_first_row, pd.DatetimeIndex):
                     corrected_first_row = corrected_first_row.strftime('%d/%m/%Y')
                 corrected_first_row = pd.Series(["date"])._append(corrected_first_row, ignore_index=True)
 
-                print(corrected_first_row)
+                #print(corrected_first_row)
                 df.iloc[0] = corrected_first_row
                 df.to_excel(file_path, index=False, header=False)
