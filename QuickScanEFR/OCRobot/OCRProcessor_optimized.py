@@ -103,13 +103,5 @@ class TextExtractorFromImages:
                 dfs.append(pd.DataFrame(df_data))
                 base_name = os.path.splitext(png_file)[0]
                 excel_filename = os.path.join(
-                    self.folder_path, f"{base_name}_excel.xlsx")
+                    self.folder_path, f"{base_name}.xlsx")
                 dfs[-1].to_excel(excel_filename, index=False)
-                print(f"Saved data from {png_file} to {excel_filename}")
-
-
-# Test
-if __name__ == "__main__":
-    folder_path = "sample_folder_path"  # Replace with your actual path
-    extractor = TextExtractorFromImages(folder_path)
-    extractor.process_texts_in_folder()
