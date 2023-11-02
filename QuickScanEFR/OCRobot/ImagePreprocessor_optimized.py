@@ -7,7 +7,7 @@ from concurrent.futures import ProcessPoolExecutor
 class ImagePreprocessor:
     def __init__(self, folder_path):
         self.folder_path = folder_path
-        self.output_folder = os.path.join(folder_path, "preprocessed_images")
+        self.output_folder = os.path.join(folder_path)
 
     def _preprocess_image(self, image_path):
         image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -20,9 +20,9 @@ class ImagePreprocessor:
 
         base_name = os.path.splitext(os.path.basename(image_path))[0]
         preprocessed_image_path = os.path.join(
-            self.output_folder, f'{base_name}_preprocessed.png')
+            self.output_folder, f'{base_name}.png')
         cv2.imwrite(preprocessed_image_path, image)
-        return f"Processed {base_name}"
+      
 
     def process_images_in_folder(self):
         if not os.path.exists(self.output_folder):
@@ -34,10 +34,6 @@ class ImagePreprocessor:
             results = list(executor.map(self._preprocess_image,
                                         [os.path.join(self.folder_path, png_file) for png_file in png_files]))
 
-            for message in results:
-                print(message)
 
 
-# Dummy run to check if the class definition is error-free
-preprocessor = ImagePreprocessor(os.path.join(
-    "sample_folder_path", "converted_images"))
+
