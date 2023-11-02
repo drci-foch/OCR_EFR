@@ -2,7 +2,6 @@ import os
 import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
-
 class OutlierDetector:
     def __init__(self, excel_file_path=None, threshold=0.5):
         self.excel_file_path = excel_file_path
@@ -20,14 +19,17 @@ class OutlierDetector:
         # Convert non-numeric values to NaN for median calculation
         numeric_data = self.data.apply(pd.to_numeric, errors='coerce')
         
-        medians = numeric_data.median(axis=1, skipna=True)
-        for index, row in self.data.iterrows():
-            for col, value in enumerate(row):
+        # Compute the median for each column
+        medians = numeric_data.median(axis=0, skipna=True)
+        
+        for col in self.data.columns:
+            for index, value in self.data[col].items():
                 # Check if the value is numeric and the median is not NaN
-                if pd.notnull(value) and pd.notnull(medians[index]) and isinstance(value, (int, float)):
-                    if abs(value - medians[index]) > self.threshold * medians[index]:
-                        anomalies.append((index, col))
+                if pd.notnull(value) and pd.notnull(medians[col]) and isinstance(value, (int, float)):
+                    if abs(value - medians[col]) > self.threshold * medians[col]:
+                        anomalies.append((index, self.data.columns.get_loc(col)))
         return anomalies
+
 
     def highlight_anomalies_in_excel(self, anomalies):
         workbook = load_workbook(self.excel_file_path)
