@@ -1,68 +1,96 @@
 import os
+import time
+import pandas as pd
 from PdfToImageConverter_optimized import PdfConverter
 from ImagePreprocessor_optimized import ImagePreprocessor
 from OCRProcessor_optimized import TextExtractorFromImages
-import time
+from ExcelFormatter import DataReshaper
 
 
 class MainPipeline:
     def __init__(self, folder_path):
         self.folder_path = folder_path
         self.pdf_converter = PdfConverter(folder_path)
-        self.image_preprocessor = ImagePreprocessor(
-            os.path.join(folder_path, "converted_images"))
-        self.text_extractor = TextExtractorFromImages(os.path.join(
-            folder_path, "converted_images", "preprocessed_images"))
+        self.image_preprocessor = ImagePreprocessor(os.path.join(folder_path))
+        self.text_extractor = TextExtractorFromImages(os.path.join(folder_path))
 
     def delete_intermediate_files(self):
-        converted_images_folder = os.path.join(
-            self.folder_path, "converted_images")
+        for dirpath, dirnames, filenames in os.walk(self.folder_path, topdown=False):
+            for filee in filenames:
+                if filee.endswith('.png'):
+                    os.remove(os.path.join(dirpath, filee))
+                    
+    def reshape_data(self):
+        generated_files_path = os.path.join(self.folder_path)
+        
 
-        for dirpath, dirnames, filenames in os.walk(converted_images_folder, topdown=False):
-            for filename in filenames:
-                if not filename.endswith('.xlsx'):
-                    os.remove(os.path.join(dirpath, filename))
+        for filename in os.listdir(generated_files_path):
+            if filename.endswith('.xlsx'):
+                file_path = os.path.join(generated_files_path, filename)
+                df = pd.read_excel(file_path)
+                reshaper = DataReshaper(df)
+                reshaped_df = reshaper.reshape()
+                reshaped_df.to_excel(file_path, index=False)
 
-            for dirname in dirnames:
-                try:
-                    os.rmdir(os.path.join(dirpath, dirname))
-                except:
-                    print(
-                        f"Le dossier {os.path.join(dirpath, dirname)} n'est pas vide, certains fichiers n'ont pas été supprimés.")
+    def concatenate_excel_files(self):
+        # List all files in the given directory
+        all_files = os.listdir(self.folder_path)
+        
+        # Filter out the Excel files
+        excel_files = [f for f in all_files if f.endswith('.xlsx')]
+        
+        # Group files by ID
+        files_by_id = {}
+        for file in excel_files:
+            file_id = file.split('_')[0]
+            if file_id not in files_by_id:
+                files_by_id[file_id] = []
+            files_by_id[file_id].append(file)
+        
+        # Create "concatenated" subdirectory if it doesn't exist
+        concatenated_folder = os.path.join(self.folder_path, "concatenated")
+        if not os.path.exists(concatenated_folder):
+            os.makedirs(concatenated_folder)
+        
+        # Concatenate files with the same ID
+        for file_id, files in files_by_id.items():
+            dfs = []
+            for file in files:
+                dfs.append(pd.read_excel(os.path.join(self.folder_path, file)))
+            
+            concatenated_df = pd.concat(dfs, axis=0, ignore_index=True)
+            
+            # Save concatenated file
+            concatenated_df.to_excel(os.path.join(concatenated_folder, f"{file_id}.xlsx"), index=False)
 
-        try:
-            os.rmdir(converted_images_folder)
-        except:
-            print(
-                "Le dossier converted_images n'est pas vide, certains fichiers n'ont pas été supprimés.")
 
     def run(self):
-        start_time = time.time()  # Record the start time
+        start_time = time.time()
 
         # Convert PDFs to Images
         self.pdf_converter.convert_pdfs_to_images()
-        print(f"PDFs converted in: {self.folder_path}/converted_images")
 
         # Preprocess Images
         self.image_preprocessor.process_images_in_folder()
-        print("Images preprocessed.")
 
         # Extract Text from Images using OCR
         self.text_extractor.process_texts_in_folder()
-        print("Text extracted and saved to Excel.")
+
+        # Reshape the generated Excel data
+        self.reshape_data()
 
         # Delete intermediate files
         self.delete_intermediate_files()
-        print("Intermediate files deleted.")
+        
+        #Concatenate excel file for each patient
+        self.concatenate_excel_files()
 
-        end_time = time.time()  # Record the end time
-        duration = end_time - start_time  # Calculate the duration
+        end_time = time.time()
+        duration = end_time - start_time
         print(f"The pipeline took {duration:.2f} seconds to complete.")
-
 
 # Test
 if __name__ == "__main__":
-    # Replace with your actual path
-    folder_path = "../QuickScanEFR/pdf_OCRobot"
+    folder_path = "../pdf_OCRobot"
     pipeline = MainPipeline(folder_path)
     pipeline.run()
