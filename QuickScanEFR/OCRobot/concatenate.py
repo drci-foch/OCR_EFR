@@ -27,5 +27,3 @@ def concatenate_excel_files(directory_path):
         # Save concatenated file
         concatenated_df.to_excel(os.path.join(directory_path, f"{file_id}.xlsx"), index=False)
 
-# Usage:
-concatenate_excel_files("../pdf_OCRobot")
