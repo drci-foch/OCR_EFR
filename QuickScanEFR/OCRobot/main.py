@@ -12,17 +12,17 @@ class MainPipeline:
         self.folder_path = folder_path
         self.pdf_converter = PdfConverter(folder_path)
         self.image_preprocessor = ImagePreprocessor(os.path.join(folder_path))
-        self.text_extractor = TextExtractorFromImages(os.path.join(folder_path))
+        self.text_extractor = TextExtractorFromImages(
+            os.path.join(folder_path))
 
     def delete_intermediate_files(self):
         for dirpath, dirnames, filenames in os.walk(self.folder_path, topdown=False):
             for filee in filenames:
                 if filee.endswith('.png'):
                     os.remove(os.path.join(dirpath, filee))
-                    
+
     def reshape_data(self):
         generated_files_path = os.path.join(self.folder_path)
-        
 
         for filename in os.listdir(generated_files_path):
             if filename.endswith('.xlsx'):
@@ -35,10 +35,10 @@ class MainPipeline:
     def concatenate_excel_files(self):
         # List all files in the given directory
         all_files = os.listdir(self.folder_path)
-        
+
         # Filter out the Excel files
         excel_files = [f for f in all_files if f.endswith('.xlsx')]
-        
+
         # Group files by ID
         files_by_id = {}
         for file in excel_files:
@@ -46,22 +46,23 @@ class MainPipeline:
             if file_id not in files_by_id:
                 files_by_id[file_id] = []
             files_by_id[file_id].append(file)
-        
+
         # Create "concatenated" subdirectory if it doesn't exist
         concatenated_folder = os.path.join(self.folder_path, "concatenated")
         if not os.path.exists(concatenated_folder):
             os.makedirs(concatenated_folder)
-        
+
         # Concatenate files with the same ID
         for file_id, files in files_by_id.items():
             dfs = []
             for file in files:
                 dfs.append(pd.read_excel(os.path.join(self.folder_path, file)))
-            
+
             concatenated_df = pd.concat(dfs, axis=0, ignore_index=True)
-            
+
             # Save concatenated file
-            concatenated_df.to_excel(os.path.join(concatenated_folder, f"{file_id}.xlsx"), index=False)
+            concatenated_df.to_excel(os.path.join(
+                concatenated_folder, f"{file_id}.xlsx"), index=False)
 
     def format_excel(self):
         concatenated_id = os.path.join(self.folder_path, "concatenated")
@@ -75,14 +76,16 @@ class MainPipeline:
                 df["Date"] = pd.to_datetime(
                     df["Date"], dayfirst=True).dt.strftime('%d/%m/%Y')
 
-                no_perc = [e for e in df.columns if "%" not in e and "Date" not in e] #I assume that if % not in column name then it is in L
-                perc = [e for e in df.columns if "%" in e] 
+                # I assume that if % not in column name then it is in L
+                no_perc = [
+                    e for e in df.columns if "%" not in e and "Date" not in e]
+                perc = [e for e in df.columns if "%" in e]
                 for c in no_perc:
                     df[c] = df[c]*1000
 
                 for c in perc:
                     df[c] = df[c]/100
-                    
+
                 print(file_path)
                 df.to_excel(file_path, index=False)
 
@@ -103,15 +106,16 @@ class MainPipeline:
 
         # Delete intermediate files
         self.delete_intermediate_files()
-        
-        #Concatenate excel file for each patient
+
+        # Concatenate excel file for each patient
         self.concatenate_excel_files()
-        
+
         self.format_excel()
 
         end_time = time.time()
         duration = end_time - start_time
         print(f"The pipeline took {duration:.2f} seconds to complete.")
+
 
 # Test
 if __name__ == "__main__":
