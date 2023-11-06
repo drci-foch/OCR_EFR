@@ -75,10 +75,14 @@ class MainPipeline:
                 df["Date"] = pd.to_datetime(
                     df["Date"], dayfirst=True).dt.strftime('%d/%m/%Y')
 
-                no_perc = [e for e in df.columns if "%" not in e and "Date" not in e]
-
+                no_perc = [e for e in df.columns if "%" not in e and "Date" not in e] #I assume that if % not in column name then it is in L
+                perc = [e for e in df.columns if "%" in e] 
                 for c in no_perc:
                     df[c] = df[c]*1000
+
+                for c in perc:
+                    df[c] = df[c]/100
+                    
                 print(file_path)
                 df.to_excel(file_path, index=False)
 
