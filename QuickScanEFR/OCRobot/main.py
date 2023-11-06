@@ -63,6 +63,24 @@ class MainPipeline:
             # Save concatenated file
             concatenated_df.to_excel(os.path.join(concatenated_folder, f"{file_id}.xlsx"), index=False)
 
+    def format_excel(self):
+        concatenated_id = os.path.join(self.folder_path, "concatenated")
+        all_files = os.listdir(concatenated_id)
+        for filename in all_files:
+            if filename.endswith(".xlsx"):
+                file_path = os.path.join(concatenated_id, filename)
+
+                df = pd.read_excel(file_path)
+
+                df["Date"] = pd.to_datetime(
+                    df["Date"], dayfirst=True).dt.strftime('%d/%m/%Y')
+
+                no_perc = [e for e in df.columns if "%" not in e and "Date" not in e]
+
+                for c in no_perc:
+                    df[c] = df[c]*1000
+                print(file_path)
+                df.to_excel(file_path, index=False)
 
     def run(self):
         start_time = time.time()
@@ -84,6 +102,8 @@ class MainPipeline:
         
         #Concatenate excel file for each patient
         self.concatenate_excel_files()
+        
+        self.format_excel()
 
         end_time = time.time()
         duration = end_time - start_time
