@@ -16,7 +16,7 @@ class MainPipeline:
             os.path.join(folder_path))
 
     def delete_intermediate_files(self):
-        for dirpath, dirnames, filenames in os.walk(self.folder_path, topdown=False):
+        for dirpath, _, filenames in os.walk(self.folder_path, topdown=False):
             for filee in filenames:
                 if filee.endswith('.png'):
                     os.remove(os.path.join(dirpath, filee))
