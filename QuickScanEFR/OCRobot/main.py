@@ -94,23 +94,30 @@ class MainPipeline:
 
         # Convert PDFs to Images
         self.pdf_converter.convert_pdfs_to_images()
+        print(f"self.pdf_converter.convert_pdfs_to_images() done")
 
         # Preprocess Images
         self.image_preprocessor.process_images_in_folder()
+        print(f"self.image_preprocessor.process_images_in_folder() done")
 
         # Extract Text from Images using OCR
         self.text_extractor.process_texts_in_folder()
+        print(f"self.text_extractor.process_texts_in_folder() done")
 
         # Reshape the generated Excel data
         self.reshape_data()
+        print(f"self.reshape_data() done")
 
         # Delete intermediate files
         self.delete_intermediate_files()
+        print(f"self.delete_intermediate_files() done")
 
         # Concatenate excel file for each patient
         self.concatenate_excel_files()
+        print(f"self.concatenate_excel_files() done")
 
         self.format_excel()
+        print(f"self.format_excel() done")
 
         end_time = time.time()
         duration = end_time - start_time

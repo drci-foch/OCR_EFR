@@ -34,6 +34,9 @@ class ImagePreprocessor:
             results = list(executor.map(self._preprocess_image,
                                         [os.path.join(self.folder_path, png_file) for png_file in png_files]))
 
+            print(results)
 
 
-
+if __name__ == "__main__":
+    pipeline = ImagePreprocessor()
+    pipeline.process_images_in_folder()

@@ -10,7 +10,7 @@ class PdfConverter:
 
     def convert_pdf_to_image(self, pdf_path, output_folder):
         base_name = os.path.splitext(os.path.basename(pdf_path))[0] + '_'
-        images = convert_from_path(pdf_path, first_page=1, last_page=1)
+        images = convert_from_path(pdf_path, first_page=1, last_page=1, poppler_path = r"C:\Users\benysar\Desktop\Github\OCR_EFR\packages\poppler-21.11.0\Library\bin")
         for i, image in enumerate(images):
             image_path = os.path.join(output_folder, f'{base_name}{i}.png')
             image.save(image_path, 'PNG')
@@ -28,3 +28,6 @@ class PdfConverter:
                                         [self.output_folder]*len(pdf_files)))
 
 
+if __name__ == "__main__":
+    pipeline = PdfConverter()
+    pipeline.convert_pdfs_to_images()

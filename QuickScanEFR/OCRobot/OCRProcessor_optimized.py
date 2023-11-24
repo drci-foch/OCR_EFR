@@ -2,7 +2,8 @@ import os
 import cv2
 import pytesseract
 import pandas as pd
-from concurrent.futures import ProcessPoolExecutor
+pytesseract.pytesseract.tesseract_cmd = r'C:\Users\benysar\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
+
 
 
 class TextExtractorFromImages:
@@ -95,13 +96,18 @@ class TextExtractorFromImages:
         png_files = [file for file in files if file.lower().endswith('.png')]
 
         dfs = []
-        with ProcessPoolExecutor() as executor:
-            results = executor.map(self._process_file, [os.path.join(
-                self.folder_path, png_file) for png_file in png_files])
+        for png_file in png_files:
+            file_path = os.path.join(self.folder_path, png_file)
+            df_data = self._process_file(file_path)
+            
+            df = pd.DataFrame(df_data)
+            dfs.append(df)
+            
+            base_name = os.path.splitext(png_file)[0]
+            excel_filename = os.path.join(self.folder_path, f"{base_name}.xlsx")
+            df.to_excel(excel_filename, index=False)
 
-            for png_file, df_data in zip(png_files, results):
-                dfs.append(pd.DataFrame(df_data))
-                base_name = os.path.splitext(png_file)[0]
-                excel_filename = os.path.join(
-                    self.folder_path, f"{base_name}.xlsx")
-                dfs[-1].to_excel(excel_filename, index=False)
+
+if __name__ == "__main__":
+    pipeline = TextExtractorFromImages()
+    pipeline.process_texts_in_folder()
