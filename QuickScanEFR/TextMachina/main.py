@@ -10,7 +10,7 @@ from PDFPlumber_refactored import PDFProcessor
 
 
 class MainPipeline:
-    def __init__(self, input_directory='../pdf_TextMachina', output_directory='../pdf_TextMachina/excel'):
+    def __init__(self, input_directory='C:/Users/benysar/Desktop/Github/OCR_EFR/QuickScanEFR/pdf_TextMachina/', output_directory='C:/Users/benysar/Desktop/Github/OCR_EFR/QuickScanEFR/pdf_TextMachina/excel/'):
         self.input_directory = input_directory
         self.output_directory = output_directory
         self.standardized_metrics = [
@@ -27,7 +27,7 @@ class MainPipeline:
         self.unit_corrector = UnitCorrector()
         self.typo_corrector = TypoCorrector(self.standardized_metrics)
         self.excel_cleaner = ExcelCleanup()
-        self.pdf_processor = PDFProcessor(directory_path=input_directory)
+        self.pdf_processor = PDFProcessor(directory_path=input_directory, output_path=output_directory)
 
     def process_pdfs(self):
         start_time = time.time()
@@ -94,14 +94,13 @@ class MainPipeline:
 
     def run(self):
         self.process_pdfs()
-        self.correct_metric_typos()
-        self.format_dates()
-        self.extract_percentages()
-        self.compute_missing_vems()
-        self.correct_units()
-        self.clean_excel_files()
-        self.detect_anomalies()
-
+        # self.correct_metric_typos()
+        # self.format_dates()
+        # self.extract_percentages()
+        # self.compute_missing_vems()
+        # self.correct_units()
+        # self.clean_excel_files()
+        # self.detect_anomalies()
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
+
 class OutlierDetector:
     def __init__(self, excel_file_path=None, threshold=0.5):
         self.excel_file_path = excel_file_path

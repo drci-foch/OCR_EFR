@@ -1,8 +1,7 @@
 import os
+os.environ['PATH'] += os.pathsep + 'C:\\Users\\benysar\\AppData\\Local\\gs10.02.1\\bin'
 import camelot
 import pandas as pd
-import multiprocessing
-
 
 class PDFProcessor:
     """
@@ -13,7 +12,7 @@ class PDFProcessor:
         directory_path (str): Path to the directory containing PDF files.
     """
 
-    def __init__(self, directory_path):
+    def __init__(self, directory_path, output_path):
         """
         Initializes the PDFProcessor with the given directory path.
         
@@ -21,6 +20,7 @@ class PDFProcessor:
             directory_path (str): Path to the directory containing PDF files.
         """
         self.directory_path = directory_path
+        self.output_path = output_path
 
     def process_pdf(self, pdf_path, output_path):
         """
@@ -32,6 +32,7 @@ class PDFProcessor:
             output_path (str): Path to save the resulting Excel file.
         """
         tables = camelot.read_pdf(pdf_path, pages='all', strip_text='\n')
+        print("here are the tables:", tables)
         with pd.ExcelWriter(output_path) as writer:
             for i, table in enumerate(tables):
                 table.df.to_excel(writer, sheet_name=f'Sheet{i+1}', index=False)
@@ -57,23 +58,12 @@ class PDFProcessor:
         return combined_data
 
     def process_directory(self):
-        """
-        Processes all PDF files in the directory 
-        using multiprocessing for efficiency.
-        """
-        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-
         for filename in os.listdir(self.directory_path):
             if filename.endswith(".pdf"):
                 pdf_path = os.path.join(self.directory_path, filename)
-                output_path = os.path.join(self.directory_path.replace(
-                    '../pdf_TextMachina', '../pdf_TextMachina/excel'), filename.replace('.pdf', '.xlsx'))
+                output_excel_path = os.path.join(self.output_path, filename.replace('.pdf', '.xlsx'))
+                self.process_and_combine(pdf_path, output_excel_path)
 
-                pool.apply_async(self.process_and_combine,
-                                 args=(pdf_path, output_path))
-
-        pool.close()
-        pool.join()
 
     def process_and_combine(self, pdf_path, output_path):
         """
@@ -89,5 +79,5 @@ class PDFProcessor:
 
 
 if __name__ == "__main__":
-    pipeline = PDFProcessor('../pdf_TextMachina')
+    pipeline = PDFProcessor('../pdf_TextMachina', '../pdf_TextMachina/excel')
     pipeline.process_directory()
