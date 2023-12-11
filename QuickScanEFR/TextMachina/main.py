@@ -10,13 +10,18 @@ from PDFPlumber_refactored import PDFProcessor
 
 
 class MainPipeline:
-    def __init__(self, input_directory='C:/Users/benysar/Desktop/Github/OCR_EFR/QuickScanEFR/pdf_TextMachina/', output_directory='C:/Users/benysar/Desktop/Github/OCR_EFR/QuickScanEFR/pdf_TextMachina/excel/'):
+    def __init__(self, input_directory='C:/Users/benysar/Desktop/Github/OCR_EFR/QuickScanEFR/pdf_TextMachina/excel_correctedVEMS/', output_directory='C:/Users/benysar/Desktop/Github/OCR_EFR/QuickScanEFR/pdf_TextMachina/excel_correctedVEMS'):
+        
         self.input_directory = input_directory
         self.output_directory = output_directory
         self.standardized_metrics = [
-            "CV", "CVF", "VR Helium", "VR  Plethysmo", "CPT Helium", "CPT Plethysmo",
-            "VR/CPT", "VEMS", "VEMS/CV", "DEM 25-75", "AA/O²", "PaO²", "PaCO²", "pH",
-            "TLCO", "TLCO/Va", "AA/O²", "Walk Test", "SaO² mini", "PI", "Arrêt inter"
+            "CV", "CVF", "VR Helium", "VR  Plethysmo", "CPT Helium", "CPT Plethysmo","Capacité Inspiratoire",
+            "VR/CPT", "VEMS", "VEMS/CV", "DEM 25-75", "DEM 75", "DEM 25", "DEM 55", "Indice de dyspnée",
+            "AA/O²", "PaO²", "PaCO²", "pH", "Sat. Mini.", "FC", "Sat", "Traitement", "SAO² initiale",
+            "TLCO", "TLCO/Va", "DLCO", "DLCO/Va", "AA/O²", "Walk Test", "SaO² mini", "PI", "Arrêt inter", "Arrêt",
+            "FC Max","date","HCO3-","Saturation", "Walk test \n Sat min-max \n Fc min-max", "CVL", "R5Hz", 
+            "VEMS après Vent", "Echelle dyspnée",
+
         ]
 
         # Initialize helper classes
@@ -93,13 +98,13 @@ class MainPipeline:
         print(f"clean_excel_files took {elapsed_time:.2f} seconds")
 
     def run(self):
-        self.process_pdfs()
+        # self.process_pdfs()
         # self.correct_metric_typos()
         # self.format_dates()
         # self.extract_percentages()
-        # self.compute_missing_vems()
         # self.correct_units()
-        # self.clean_excel_files()
+        # self.compute_missing_vems()
+        self.clean_excel_files()
         # self.detect_anomalies()
 
 

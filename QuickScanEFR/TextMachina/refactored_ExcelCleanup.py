@@ -9,7 +9,7 @@ class ExcelCleanup:
         self.data = None
 
     def load_workbook(self):
-        self.data = pd.read_excel(self.file_path)
+        self.data = pd.read_excel(self.file_path, header=None)
 
     def transpose_data(self):
         # Reset the index to make sure the dates become a regular column
@@ -17,6 +17,10 @@ class ExcelCleanup:
         df_transposed = self.data.transpose()
         df_transposed.columns = df_transposed.iloc[0]
         df_transposed = df_transposed.drop(df_transposed.index[0])
+
+        # Rename the first column to "date"
+        df_transposed.columns.values[0] = 'date'
+
         
         self.data = df_transposed
         return self.data  # Return for inspection
@@ -40,15 +44,28 @@ class ExcelCleanup:
 
     def save_cleaned_data(self, save_path=None):
         save_path = save_path or self.file_path.replace(".xlsx", ".xlsx")
-        self.data.to_excel(save_path, index=True)
+        self.data.to_excel(save_path, index=False)
 
     @staticmethod
     def clean_multiple_docs(directory_path):
+        # Create the 'excel_cleanup' subdirectory if it doesn't exist
+        cleanup_directory = os.path.join(directory_path, 'excel_cleanup')
+        if not os.path.exists(cleanup_directory):
+            os.makedirs(cleanup_directory)
+
+        # Iterate over all Excel files in the directory
         for filename in os.listdir(directory_path):
             if filename.endswith(".xlsx"):
+                print(f"Processing file: {filename}")
                 file_path = os.path.join(directory_path, filename)
                 cleaner = ExcelCleanup(file_path)
+                
+                # Perform the cleaning operations
                 cleaner.load_workbook()
                 cleaner.clean_percentage_values()
-                cleaner.transpose_data()  
-                cleaner.save_cleaned_data()
+                cleaner.transpose_data()
+
+                # Save the cleaned data
+                save_path = os.path.join(cleanup_directory, filename)  # Save with the same file name in the new subdirectory
+                cleaner.save_cleaned_data(save_path)
+                print(f"Cleaned data saved for file: {filename}")

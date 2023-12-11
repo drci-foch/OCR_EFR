@@ -1,8 +1,9 @@
 import os
-import warnings
+import shutil
 import pandas as pd
-warnings.simplefilter(action='ignore', category=UserWarning)
 import math
+import re
+
 
 class PercentageExtractor:
     """
@@ -10,41 +11,40 @@ class PercentageExtractor:
     """
     @staticmethod
     def extract_percentages_from_row(row):
-        """
-        Extracts percentage values from a row of data.
-
-        Parameters:
-        - row (Series): A row of data containing values that might be in the format "value percentage".
-
-        Returns:
-        - tuple: Two lists, one with cleaned values and another with extracted percentages.
-        """
         cleaned_values = []
         percentage_values = []
-        flag = "clean"
+
         for value in row:
-            if isinstance(value, str) and "%" in value:
-                # Find the position of the first percentage sign
-                percent_index = value.index('%')
+            str_value = str(value)
+            # First, check for existing percentage patterns
+            matches = re.findall(r'(\d+(\/\d+)?\s*[%ù])', str_value)
 
-                # Work backwards to determine where the numeric percentage starts
-                start_index = percent_index
+            # Check for a two-number pattern where the second number is a two-digit number
+            two_number_match = re.search(r'(\d+)\s+(\d{2,}(?:[.,]\d+)?%?)', str_value)
+            if two_number_match and not matches:
+                
+                number1, number2 = two_number_match.groups()
+                print(number2)     
+                cleaned_values.append(str_value.replace(f"{number1} {number2}", number1).strip())
+                percentage_values.append(f"{number2}%")
+                
+            elif matches:
+                # Handle matched percentage expressions
+                percent_value = ' '.join([match[0] for match in matches]).replace('ù', '%')
+                
+                cleaned_value = str_value
+                for match in matches:
+                    cleaned_value = cleaned_value.replace(match[0], '').strip()
                     
-                while start_index > 0 and not value[start_index - 1].isspace():
-                    start_index -= 1
-                # Split the string based on the starting index of the numeric percentage
-
-                # Remove trailing spaces
-                cleaned_value = value[:start_index].rstrip()
-                percent_value = value[start_index:].strip()
-
                 cleaned_values.append(cleaned_value)
                 percentage_values.append(percent_value)
             else:
+                # If no specific pattern is found, keep the original value
                 cleaned_values.append(value)
                 percentage_values.append(None)
 
         return cleaned_values, percentage_values
+
 
     @staticmethod
     def process_dataframe_for_percentages(df):
@@ -56,53 +56,78 @@ class PercentageExtractor:
 
         Returns:
         - DataFrame: A dataframe with original and extracted percentage rows.
-        """
+        """    
         result_data = []
 
         for _, row in df.iterrows():
             label = str(row[0])
             data = row[1:]
-            
-            cleaned_data, percentage_data = PercentageExtractor.extract_percentages_from_row(data)
-            
-            # Always add the original row
-            result_data.append([label] + cleaned_data)
-            
-            
-            is_empty_row = all((not val or val == "" or (isinstance(val, float) and math.isnan(val))) for val in cleaned_data[1:])
-            # If after extraction, there's percentage data but no cleaned data (excluding the label), drop the cleaned data row
-            if any(percentage_data) and is_empty_row:  
-                #print(cleaned_data, percentage_data)
-                result_data.pop()  # Remove the last added (cleaned data) row
-                
-            # Add the percentage row if it contains any percentages
-            if any(percentage_data):
-                result_data.append([label + "%"] + percentage_data)
 
+            # Check if the label is one of the specified ones
+            if label in ["SaO² mini", "Sat. Mini", "Sat"]:
+                # For these labels, add the original row without changes
+                result_data.append([label] + list(data))
+            else:
+                # Apply the percentage extraction logic for other labels
+                cleaned_data, percentage_data = PercentageExtractor.extract_percentages_from_row(data)
 
-        result_df = pd.DataFrame(result_data, columns=df.columns)
+                # Always add the cleaned data row
+                result_data.append([label] + cleaned_data)
+
+                is_empty_row = all((not val or val == "" or (isinstance(val, float) and math.isnan(val))) for val in cleaned_data[1:])
+                # If after extraction, there's percentage data but no cleaned data (excluding the label), drop the cleaned data row
+                if any(percentage_data) and is_empty_row:
+                    result_data.pop()  # Remove the last added (cleaned data) row
+
+                # Add the percentage row if it contains any percentages
+                if any(percentage_data):
+                    result_data.append([label + "%"] + percentage_data)
+
+        # Check if all rows have the same length
+        row_lengths = [len(row) for row in result_data]
+        if len(set(row_lengths)) != 1:
+            print("Inconsistent row lengths found:", set(row_lengths))
+        
+        # Creating DataFrame from the result data
+        result_df = pd.DataFrame(result_data, columns=result_data[0] if result_data else [])
         
         return result_df
 
 
-
-
     @classmethod
-    def extract_percentages_from_excel(self, directory_path):
-        """
-        Extracts percentage values from all Excel files in a specified directory.
+    def extract_percentages_from_excel(cls, directory_path, output_path=None):
+        if output_path is None:
+            output_path = os.path.join(os.getcwd(), 'excel_perc')
 
-        Parameters:
-        - directory_path (str): Path to the directory containing the Excel files.
-        """
+        exception_path = os.path.join(output_path, 'exception')
+        os.makedirs(output_path, exist_ok=True)
+        os.makedirs(exception_path, exist_ok=True)
+
+        exception_log = []  # List to store exceptions
+
         for filename in filter(lambda f: f.endswith(".xlsx"), os.listdir(directory_path)):
+            print(f"--------------------------Processing {filename}-------------------------- ")
             file_path = os.path.join(directory_path, filename)
+            output_file_path = os.path.join(output_path, filename)
 
-            # Read the Excel file (assuming it has only one sheet)
-            df = pd.read_excel(file_path, header=None)
+            try:
+                df = pd.read_excel(file_path, header=None, engine='openpyxl')
+                if df.shape[1] >= 2:
+                    processed_df = cls.process_dataframe_for_percentages(df)
+                    processed_df.to_excel(output_file_path, index=False, header=False, engine='xlsxwriter')
+                    print(f"Processed {filename} successfully.")
+                else:
+                    print(f"Skipping {filename}: Insufficient columns to process.")
+            except Exception as e:
+                exception_msg = f"Error processing {filename}: {str(e)}"
+                print(exception_msg)
+                exception_log.append([filename, str(e)])
 
-            # Process the dataframe
-            processed_df = self.process_dataframe_for_percentages(df)
+                # Move the problematic file to the exception folder
+                shutil.copy(file_path, os.path.join(exception_path, filename))
 
-            # Save the processed dataframe back to the Excel file
-            processed_df.to_excel(file_path, index=False, header=False)
+        # Save the exception log to an Excel file
+        if exception_log:
+            exception_df = pd.DataFrame(exception_log, columns=['Filename', 'Exception'])
+            exception_log_path = os.path.join(exception_path, 'exception_log.xlsx')
+            exception_df.to_excel(exception_log_path, index=False)
