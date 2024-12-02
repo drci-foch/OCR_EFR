@@ -4,6 +4,7 @@ import pandas as pd
 import re
 from datetime import datetime, timedelta
 import calendar
+import shutil
 
 class DateFormatter:
     
@@ -285,46 +286,112 @@ class DateFormatter:
 
         return pd.Series(cleaned_dates)
 
-    def format_dates_in_excel(self, directory_path: str, output_path = "C:\\Users\\benysar\\Desktop\\Github\\OCR_EFR\\QuickScanEFR\\pdf_TextMachina\\excel_date", problem_directory="C:\\Users\\benysar\\Desktop\\Github\\OCR_EFR\\QuickScanEFR\\pdf_TextMachina\\problem"):
+
+    def format_dates_in_memory(self, data_dict):
+        """Process data that's already in memory"""
+        processed_data = {}
+        for filename, df in data_dict.items():
+            try:
+                print(f"\nProcessing file: {filename}")
+                df_copy = df.copy()
+                
+                # Drop columns and lines that are completely empty
+                df_copy = df_copy.dropna(axis=1, how='all')
+                df_copy = df_copy.dropna(axis=0, how='all')
+
+                # Find the index of the first non-null element in column 0, except for the first row
+                first_non_null_index = df_copy.iloc[1:, 0].notnull().idxmax()
+                desired_index = first_non_null_index - 1
+
+                # Get the row with dates
+                first_row = df_copy.iloc[desired_index]
+                
+                # Format dates
+                corrected_first_row = self.flexible_date_formatting(first_row)
+                
+                # Check for percentage values
+                contains_percent = corrected_first_row.apply(lambda x: 'contains_percent' if '%' in str(x) else x)
+
+                if 'contains_percent' in contains_percent.values:
+                    # Try the row above
+                    desired_index -= 1
+                    first_row = df_copy.iloc[desired_index]
+                    corrected_first_row = self.flexible_date_formatting(first_row)
+                    contains_percent = corrected_first_row.apply(lambda x: 'contains_percent' if '%' in str(x) else x)
+                    
+                    if 'contains_percent' in contains_percent.values:
+                        print(f"File contains percentages in date row: {filename}")
+                        processed_data[filename] = df  # Keep original if problem
+                        continue
+
+                # Apply additional date processing
+                corrected_first_row = self.split_and_distribute(corrected_first_row)
+                corrected_first_row = pd.to_datetime(corrected_first_row, errors='coerce', format='%d/%m/%Y')
+
+                # Format dates consistently
+                if isinstance(corrected_first_row, pd.Series):
+                    corrected_first_row = corrected_first_row.dt.strftime('%d/%m/%Y')
+                elif isinstance(corrected_first_row, pd.DatetimeIndex):
+                    corrected_first_row = corrected_first_row.strftime('%d/%m/%Y')
+
+                # Apply chronological correction
+                df_copy.iloc[0] = self.correct_date_chronology(corrected_first_row)
+                print(f"Successfully processed dates for {filename}")
+                
+                processed_data[filename] = df_copy
+
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
+                processed_data[filename] = df  # Keep original if error
+        
+        return processed_data
+
+    def format_dates_in_excel(self, directory_path: str, output_path = r"..\pdf_test\excel_date", problem_directory=r"..\pdf_TextMachina\problem"):
+        """Format dates in Excel files"""
+        # Create necessary directories
+        os.makedirs(output_path, exist_ok=True)
+        os.makedirs(problem_directory, exist_ok=True)
+
+        # Convert relative paths to absolute
+        output_path = os.path.abspath(output_path)
+        problem_directory = os.path.abspath(problem_directory)
+        
+        print(f"Processing files from: {directory_path}")
+        print(f"Saving to: {output_path}")
+
         for filename in os.listdir(directory_path):
             if filename.endswith(".xlsx"):
                 filepath = os.path.join(directory_path, filename)
-                filepath_out =  os.path.join(output_path, filename)
+                filepath_out = os.path.join(output_path, filename)
+                
                 try:
-                    print(f"Processing file: {filepath}")
-
+                    print(f"\nProcessing file: {filepath}")
                     df = pd.read_excel(filepath, header=None)
-                    #Drop columns and lines that are completely empty
+                    
+                    # Process the DataFrame
                     df = df.dropna(axis=1, how='all')
                     df = df.dropna(axis=0, how='all')
 
-                    # Step 1: Find the index of the first non-null element in column 0, except for the first row
                     first_non_null_index = df.iloc[1:, 0].notnull().idxmax()
-
-                    # Step 2: Get the index of the row just before the first non-null row
                     desired_index = first_non_null_index - 1
-
-                    # Step 3: Retrieve the row
                     first_row = df.iloc[desired_index]
 
-                    #print(f"Original first row:\n{first_row}")
                     corrected_first_row = self.flexible_date_formatting(first_row)
-                    
                     contains_percent = corrected_first_row.apply(lambda x: 'contains_percent' if '%' in str(x) else x)
 
                     if 'contains_percent' in contains_percent.values:
-                        # Try the row above
                         desired_index -= 1
                         first_row = df.iloc[desired_index]
                         corrected_first_row = self.flexible_date_formatting(first_row)
                         contains_percent = corrected_first_row.apply(lambda x: 'contains_percent' if '%' in str(x) else x)
+                        
                         if 'contains_percent' in contains_percent.values:
-                            # If still contains percent, move file to problem folder
                             problem_file_path = os.path.join(problem_directory, filename)
                             if os.path.exists(problem_file_path):
                                 os.remove(problem_file_path)
-                            os.rename(filepath, problem_file_path)
-                            continue  # Skip the rest of the processing for this file
+                            shutil.move(filepath, problem_file_path)
+                            print(f"File contains percentages, moved to problem directory: {filename}")
+                            continue
 
                     corrected_first_row = self.split_and_distribute(corrected_first_row)
                     corrected_first_row = pd.to_datetime(corrected_first_row, errors='coerce', format='%d/%m/%Y')
@@ -334,21 +401,16 @@ class DateFormatter:
                     elif isinstance(corrected_first_row, pd.DatetimeIndex):
                         corrected_first_row = corrected_first_row.strftime('%d/%m/%Y')
 
-                    #print(f"Corrected first row:\n{corrected_first_row}")
-
                     df.iloc[0] = self.correct_date_chronology(corrected_first_row)
-                    #print(f"Correct date chronology:\n{df.iloc[0]}")
-
-                    df.to_excel(filepath_out, index=False, header=False)
                     
-                except ValueError as e:
-                    if "could not broadcast input array from shape" in str(e) or "Must have equal len keys and value when setting with an iterable" in str(e):
-                        problem_file_path = os.path.join(problem_directory, filename)
-                        # Check if the file exists in the problem directory and remove it if it does
-                        if os.path.exists(problem_file_path):
-                            os.remove(problem_file_path)
-                        os.rename(filepath, problem_file_path)
-                        print(f"Problem with file {filename}. Moved to 'problem' folder due to error: {e}")
-                    else:
-                        # Handle other ValueError cases or re-raise the exception
-                        raise
+                    print(f"Saving processed file to: {filepath_out}")
+                    df.to_excel(filepath_out, index=False, header=False)
+                    print(f"Successfully processed: {filename}")
+                    
+                except Exception as e:
+                    print(f"Error processing {filename}: {str(e)}")
+                    problem_file_path = os.path.join(problem_directory, filename)
+                    if os.path.exists(problem_file_path):
+                        os.remove(problem_file_path)
+                    shutil.move(filepath, problem_file_path)
+                    print(f"Moved problematic file to: {problem_file_path}")

@@ -8,8 +8,8 @@ class TypoCorrector:
 
     @staticmethod
     def levenshtein_distance(s1: str, s2: str) -> int:
-        s1 = str(s1)  # Ensure s1 is a string
-        s2 = str(s2)  # Ensure s2 is a string
+        s1 = str(s1)
+        s2 = str(s2)
 
         if len(str(s1)) > len(str(s2)):
             s1, s2 = s2, s1
@@ -36,6 +36,72 @@ class TypoCorrector:
                 best_match = standard
         return best_match if best_distance <= max_distance else " "
 
+    def correct_data_in_memory(self, data_dict):
+        """Process data that's in memory with detailed logging"""
+        corrected_data = {}
+        print("\nStarting metric typo correction:")
+        
+        for filename, df in data_dict.items():
+            print(f"\nProcessing file: {filename}")
+            try:
+                df = df.copy()
+                if df.empty or df.shape[1] == 0:
+                    raise ValueError("DataFrame is empty or missing first column")
+
+                # Get the metrics column (either index or first column)
+                if df.index.name is None:
+                    metrics_col = df.columns[0]
+                    metric_values = df[metrics_col]
+                else:
+                    metrics_col = df.index.name or 'index'
+                    metric_values = df.index
+
+                if pd.isnull(metric_values.iloc[0]):
+                    metric_values.iloc[0] = 'date'
+                    print("Set null first value to 'date'")
+
+                unique_metrics = metric_values.dropna().unique().tolist()
+                print("\nOriginal unique metrics:", unique_metrics)
+                
+                relevant_metrics = [self.correct(metric, self.standardized_strings) for metric in unique_metrics]
+                print("Corrected unique metrics:", relevant_metrics)
+
+                # Create a dictionary to track changes
+                changes = {}
+                
+                def correct_and_log(x):
+                    if pd.isnull(x):
+                        return x
+                    corrected = self.correct(str(x), relevant_metrics)
+                    if str(x) != corrected and corrected != " ":
+                        changes[str(x)] = corrected
+                    return corrected
+
+                corrected_series = metric_values.apply(correct_and_log)
+
+                # Print the changes
+                if changes:
+                    print("\nMetric corrections made:")
+                    for original, corrected in changes.items():
+                        print(f"  '{original}' -> '{corrected}'")
+                else:
+                    print("\nNo corrections needed")
+
+                # Apply corrections
+                if df.index.name is None:
+                    df[metrics_col] = corrected_series
+                else:
+                    df.index = corrected_series
+
+                corrected_data[filename] = df
+                print(f"Successfully processed {filename}")
+
+            except Exception as e:
+                print(f"Problem with DataFrame {filename}: {e}")
+                continue
+
+        return corrected_data
+
     def correct_multiple_docs(self, directory_path: str, directory_output="C:\\Users\\benysar\\Desktop\\Github\\OCR_EFR\\QuickScanEFR\\pdf_TextMachina\\excel_metrics", problem_directory="C:\\Users\\benysar\\Desktop\\Github\\OCR_EFR\\QuickScanEFR\\pdf_TextMachina\\problem"):
         """Correct typos in the metric names in Excel files."""
         for filename in os.listdir(directory_path):
@@ -53,39 +119,29 @@ class TypoCorrector:
                     metric_values = df.iloc[:, 0]
                     unique_metrics = metric_values.dropna().unique().tolist()
                     relevant_metrics = [self.correct(metric, self.standardized_strings) for metric in unique_metrics]
-                    #print(filename, relevant_metrics)
-                    # Create a new series with corrected values
                     corrected_series = metric_values.apply(lambda x: self.correct(str(x), relevant_metrics) if pd.notnull(x) else x)
-                    print(filename)
-                    print(f'corrected_series :{corrected_series}')
-                    print(f'df first row :{df.iloc[:, 0]}')
+                    
+                    print(f"\nProcessing file: {filename}")
+                    print("Original unique metrics:", unique_metrics)
+                    print("Corrected unique metrics:", relevant_metrics)
 
-
-                    # Check and ensure that the lengths of the series match before assignment
                     if len(corrected_series) == len(df.iloc[:, 0]):
                         df.iloc[:, 0] = corrected_series
                     else:
-                        # Handle the case where the lengths do not match
-                        # This could involve padding the series or truncating it
-                        # For now, let's just print out a message
-                        print(f"Length mismatch in file {filename}: {len(corrected_series)} vs {len(df.iloc[:, 0])}")
-                        # Optionally, you could raise an error here or handle it as needed
+                        print(f"Length mismatch in file {filename}")
+                        continue
 
-                    # Create the output file path based on the directory_output and filename
                     output_filepath = os.path.join(directory_output, filename)
-
-                    # Save the corrected DataFrame to Excel with a valid file extension
+                    os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+                    
                     with pd.ExcelWriter(output_filepath, engine='xlsxwriter') as writer:
                         df.to_excel(writer, index=False, header=False)
 
                 except (IndexError, ValueError) as e:
+                    print(f"Problem with file {filename}: {e}")
                     problem_file_path = os.path.join(problem_directory, filename)
-
-                    # Check if the file already exists in the problem folder
+                    os.makedirs(problem_directory, exist_ok=True)
+                    
                     if os.path.exists(problem_file_path):
-                        # Delete the existing file
                         os.remove(problem_file_path)
-
-                    # Rename the file to move it to the problem folder
                     os.rename(filepath, problem_file_path)
-                    print(f"Problem with file {filename}. Moved to 'problem' folder due to error: {e}")

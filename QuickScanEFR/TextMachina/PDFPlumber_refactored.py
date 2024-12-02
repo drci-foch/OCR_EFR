@@ -1,50 +1,86 @@
 import os
 import shutil
-os.environ['PATH'] += os.pathsep + 'C:\\Users\\benysar\\AppData\\Local\\gs10.02.1\\bin'
+os.environ['PATH'] += os.pathsep + r'C:\Program Files\gs\gs10.04.0\bin'
 import camelot
 import pandas as pd
 from openpyxl import Workbook, load_workbook
 
 class PDFProcessor:
-    """
-    A class to process PDFs in a given directory, extract tables, 
-    and save them as Excel files.
-    
-    Attributes:
-        directory_path (str): Path to the directory containing PDF files.
-    """
-
     def __init__(self, directory_path, output_path):
-        """
-        Initializes the PDFProcessor with the given directory path.
-        
-        Args:
-            directory_path (str): Path to the directory containing PDF files.
-        """
-        self.directory_path = directory_path
-        self.output_path = output_path
+        self.directory_path = os.path.abspath(directory_path)
+        self.output_path = os.path.abspath(output_path)
+        print(f"Initialized with input directory: {self.directory_path}")
+        print(f"Output directory: {self.output_path}")
+        os.makedirs(self.output_path, exist_ok=True)
 
     def process_pdf(self, pdf_path, output_path):
+        try:
+            if not os.path.exists(pdf_path):
+                raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+                
+            print(f"Processing PDF: {pdf_path}")
+            tables = camelot.read_pdf(pdf_path, pages='1-end', flavor="lattice", strip_text='\n')
+            print(f"Extracted {len(tables)} tables from {os.path.basename(pdf_path)}")
+            
+            with pd.ExcelWriter(output_path) as writer:
+                for i, table in enumerate(tables):
+                    table.df.to_excel(writer, sheet_name=f'Sheet{i+1}', index=False)
+            print(f"Saved tables to: {output_path}")
+            return True
+            
+        except Exception as e:
+            print(f"Error processing PDF: {str(e)}")
+            self.handle_error(pdf_path, 'exception', str(e))
+            return False
+
+    def process_and_combine(self, pdf_path, output_path):
         """
-        Processes a single PDF, extracts tables from it, 
-        and saves them in an Excel file.
-        
+        Processes a PDF and combines the extracted tables horizontally.
+
         Args:
             pdf_path (str): Path to the PDF file.
             output_path (str): Path to save the resulting Excel file.
         """
-        try: 
-            tables = camelot.read_pdf(pdf_path, pages='1-end', flavor="lattice", strip_text='\n')
-            print(f"Here are the number of tables extracted for {os.path.basename(pdf_path)}:", tables)
-            with pd.ExcelWriter(output_path) as writer:
-                for i, table in enumerate(tables):
-                    table.df.to_excel(writer, sheet_name=f'Sheet{i+1}', index=False)
-        except ZeroDivisionError:
-            problem_folder = os.path.join(self.directory_path, 'problem')
-            os.makedirs(problem_folder, exist_ok=True)
-            problem_file_path = os.path.join(problem_folder, os.path.basename(pdf_path))
-            os.rename(pdf_path, problem_file_path)
-            print(f"Problem with file {pdf_path}. Moved to 'problem' folder.")
+        try:
+            print(f"Starting processing of {pdf_path}")
+            # Uncommented the PDF processing step
+            self.process_pdf(pdf_path, output_path)
+            print(f"PDF processed, combining data from {output_path}")
+            combined_data = self.combine_data_horizontally(output_path)
+            print("Data combined, saving final result")
+            combined_data.to_excel(output_path)
+            print(f"Processing complete for {pdf_path}")
+            return True
+        except Exception as e:
+            print(f"Error processing {pdf_path}: {str(e)}")
+            self.handle_error(pdf_path, 'exception', str(e))
+            return False
+
+    def process_directory(self):
+        print("\nStarting directory processing...")
+        print(f"Looking for PDFs in: {self.directory_path}")
+        
+        if not os.path.exists(self.directory_path):
+            print(f"Input directory does not exist: {self.directory_path}")
+            return []
+            
+        processed_files = []
+        pdf_files = [f for f in os.listdir(self.directory_path) if f.endswith('.pdf')]
+        print(f"Found {len(pdf_files)} PDF files")
+        
+        for filename in pdf_files:
+            pdf_path = os.path.join(self.directory_path, filename)
+            output_excel_path = os.path.join(self.output_path, filename.replace('.pdf', '.xlsx'))
+            
+            print(f"\nProcessing file: {filename}")
+            if self.process_and_combine(pdf_path, output_excel_path):
+                processed_files.append(filename)
+                print(f"Successfully processed {filename}")
+            else:
+                print(f"Failed to process {filename}")
+        
+        print(f"\nProcessed {len(processed_files)} files successfully")
+        return processed_files
 
     def combine_data_horizontally(self, output_path):
         """
@@ -173,56 +209,6 @@ class PDFProcessor:
         pivoted_df = pivoted_df.loc[original_order_measure]
         pivoted_df.index.name = None
         return pivoted_df
-
-    def process_directory(self):
-        for filename in os.listdir(self.directory_path):
-            if filename.endswith(".pdf"):
-                pdf_path = os.path.join(self.directory_path, filename)
-                output_excel_path = os.path.join(self.output_path, filename.replace('.pdf', '.xlsx'))
-                self.process_and_combine(pdf_path, output_excel_path)
-
-
-    def process_and_combine(self, pdf_path, output_path):
-        """
-        Processes a PDF and combines the extracted tables horizontally.
-
-        Args:
-            pdf_path (str): Path to the PDF file.
-            output_path (str): Path to save the resulting Excel file.
-        """
-        try:
-            #self.process_pdf(pdf_path, output_path)
-            combined_data = self.combine_data_horizontally(output_path)
-            combined_data.to_excel(output_path)  # Provide the 'output_path' here
-            pass
-        except ZeroDivisionError:
-            problem_folder = os.path.join(self.directory_path, 'problem')
-            os.makedirs(problem_folder, exist_ok=True)
-            problem_file_path = os.path.join(problem_folder, os.path.basename(pdf_path))
-            os.rename(pdf_path, problem_file_path)
-            print(f"Problem with file {pdf_path}. Moved to 'problem' folder.")
-        except Exception as e:
-            problem_folder = os.path.join(self.directory_path, 'exception')
-            os.makedirs(problem_folder, exist_ok=True)
-            
-            # Move the problematic file
-            problem_file_path = os.path.join(problem_folder, os.path.basename(pdf_path))
-            os.rename(pdf_path, problem_file_path)
-
-            # Log the exception in an Excel file
-            excel_file = os.path.join(problem_folder, 'exceptions_log.xlsx')
-            if not os.path.exists(excel_file):
-                wb = Workbook()
-                ws = wb.active
-                ws.append(["Folder Name", "Exception"])
-            else:
-                wb = load_workbook(excel_file)
-                ws = wb.active
-
-            ws.append([os.path.basename(pdf_path), str(e)])
-            wb.save(excel_file)
-            print(f"An error occurred while processing {pdf_path}: {e}. Moved to 'exception' folder.")
-
 
 # if __name__ == "__main__":
 #     pipeline = PDFProcessor(directory_path='../pdf_TextMachina/excel/0189149780_2015-12-31_D6DB5B95-5605-46D3-B653-08103D0A6EC4.pdf',output_path= '../pdf_TextMachina/excel/outputs.xlsx')
