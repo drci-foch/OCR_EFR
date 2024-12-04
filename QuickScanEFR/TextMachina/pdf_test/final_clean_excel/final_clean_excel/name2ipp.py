@@ -1,7 +1,6 @@
 import pandas as pd
 import os
 import re
-import shutil
 
 def normalize_name(name):
     name = name.upper().strip()
@@ -16,20 +15,14 @@ def normalize_name(name):
     for acc, repl in accents.items():
         name = name.replace(acc, repl)
     
-    # Remplace les tirets par des espaces
     name = name.replace('-', ' ')
-    
-    # Supprime les caractères spéciaux tout en gardant les espaces
     name = re.sub(r'[^A-Z0-9\s]', '', name)
-    
-    # Normalise les espaces (supprime les espaces multiples)
     return ' '.join(word for word in name.split())
 
 def get_name_variations(nom, nom_ancien, prenom):
     variations = set()
     noms = [normalize_name(nom)]
     
-    # Gestion du nom ancien qui peut être un deuxième nom
     if nom_ancien and nom_ancien != nom:
         ancien_parts = normalize_name(nom_ancien).split()
         for part in ancien_parts:
@@ -38,12 +31,10 @@ def get_name_variations(nom, nom_ancien, prenom):
     
     prenom_norm = normalize_name(prenom)
     
-    # Génère toutes les combinaisons possibles
     for current_nom in noms:
         variations.add(f"{current_nom} {prenom_norm}")
         variations.add(f"{prenom_norm} {current_nom}")
         
-        # Si le nom contient plusieurs parties
         nom_parts = current_nom.split()
         if len(nom_parts) > 1:
             for part in nom_parts:
@@ -65,11 +56,7 @@ def create_patient_dict(df):
     return patient_dict
 
 def process_files(source_directory, patient_dict):
-    target_directory = os.path.join(source_directory, 'fichiers_IPP')
-    os.makedirs(target_directory, exist_ok=True)
-    
-    copied_count = 0
-    errors = []
+    results = []
     
     for filename in os.listdir(source_directory):
         if not filename.endswith('.xlsx'):
@@ -81,30 +68,18 @@ def process_files(source_directory, patient_dict):
             ' '.join(reversed(normalize_name(base_name).split()))
         ]
         
-        matched = False
+        matched_ipp = None
         for normalized_name in normalized_variations:
             if normalized_name in patient_dict:
-                new_name = f"{patient_dict[normalized_name]}.xlsx"
-                source_path = os.path.join(source_directory, filename)
-                target_path = os.path.join(target_directory, new_name)
-                
-                try:
-                    if os.path.exists(target_path):
-                        errors.append(f"Erreur: {new_name} existe déjà pour {filename}")
-                        continue
-                        
-                    shutil.copy2(source_path, target_path)
-                    copied_count += 1
-                    print(f"Copié: {filename} -> {new_name}")
-                    matched = True
-                    break
-                except Exception as e:
-                    errors.append(f"Erreur lors de la copie de {filename}: {str(e)}")
+                matched_ipp = patient_dict[normalized_name]
+                break
         
-        if not matched:
-            errors.append(f"Pas de correspondance trouvée pour: {filename}")
+        results.append({
+            'Excel_Filename': filename,
+            'IPP': matched_ipp if matched_ipp else 'Non trouvé'
+        })
     
-    return copied_count, errors
+    return results
 
 def main():
     encodings = ['latin1', 'utf-8', 'iso-8859-1', 'cp1252']
@@ -124,13 +99,21 @@ def main():
         
     patient_dict = create_patient_dict(df)
     directory = '.'
-    copied_count, errors = process_files(directory, patient_dict)
+    results = process_files(directory, patient_dict)
     
-    print(f"\nRésumé: {copied_count} fichiers copiés")
-    if errors:
-        print("\nErreurs:")
-        for error in errors:
-            print(error)
+    # Create DataFrame and save to Excel
+    results_df = pd.DataFrame(results)
+    output_filename = 'matching_results.xlsx'
+    results_df.to_excel(output_filename, index=False)
+    
+    # Print summary
+    total_files = len(results)
+    matched_files = sum(1 for r in results if r['IPP'] != 'Non trouvé')
+    print(f"\nRésumé:")
+    print(f"Total fichiers Excel: {total_files}")
+    print(f"Fichiers avec IPP trouvé: {matched_files}")
+    print(f"Fichiers sans correspondance: {total_files - matched_files}")
+    print(f"\nRésultats sauvegardés dans: {output_filename}")
 
 if __name__ == "__main__":
     main()
